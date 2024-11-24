@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../notification/signal_service.dart';
 
 class BuyPage extends StatefulWidget {
@@ -65,7 +64,7 @@ class _BuyPageState extends State<BuyPage> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('Buy: ${signal['buyPrice']}'),
+            Text('Buy: ${signal['price']}'),
             Text('Stop Loss: ${signal['stopLoss']}'),
             Text('Target: ${signal['target']}'),
             Text('Time: ${signal['time']}'),

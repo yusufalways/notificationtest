@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'notification/signal_service.dart'; // Import your SignalService
+import 'notification/signal_service.dart'; // Import SignalService
+import 'notification/notification.dart'; // Import NotificationService
 
-// Importing pages
+// Importing UI pages
 import 'ui/home/home_page.dart';
 import 'ui/buy/buy_page.dart';
 import 'ui/sell/sell_page.dart';
 import 'ui/chart/chart_page.dart'; // Chart Page
-import 'notification/notification.dart'; // Notification Service
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize NotificationService and SignalService
-  await NotificationService.init();
-  await SignalService.instance.initializeNotifications(); // No longer a void error
-
-  SignalService.instance.startFetchingSignals();
-  tz.initializeTimeZones();
+  // Initialize notifications and time zones
+  await NotificationService.init(); // Initialize NotificationService
+  await SignalService.instance.initializeNotifications(); // Corrected SignalService initialization
+  SignalService.instance.startFetchingSignals(); // Start fetching signals every 5 seconds
+  tz.initializeTimeZones(); // Initialize time zones
 
   runApp(const PaperTradingApp());
 }
@@ -51,10 +49,10 @@ class _MainScreenState extends State<MainScreen> {
 
   // Tab pages
   final List<Widget> _pages = [
-    const HomePage(),  // HomePage with notification buttons
-    const ChartPage(),
-    const BuyPage(),
-    const SellPage(),
+    const HomePage(), // HomePage with notification buttons
+    const ChartPage(), // Chart tab
+    const BuyPage(), // Buy tab
+    const SellPage(), // Sell tab
   ];
 
   // Handle tab switching
