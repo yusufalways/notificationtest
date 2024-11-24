@@ -37,6 +37,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   timezone: ^0.10.0
   flutter_local_notifications: ^18.0.1
+  http: ^1.2.2
+  flutter_background: ^1.3.0+1
+  html: ^0.15.5
 
 dev_dependencies:
   flutter_test:

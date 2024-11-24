@@ -1,69 +1,91 @@
 import 'package:flutter/material.dart';
-
-import 'notification/notification.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
+
+// Importing pages
+import 'ui/home/home_page.dart';
+import 'ui/buy/buy_page.dart';
+import 'ui/sell/sell_page.dart';
+import 'ui/chart/chart_page.dart'; // Chart Page
+import 'notification/notification.dart'; // Notification Service
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.init();
-  tz.initializeTimeZones();
+  await NotificationService.init(); // Initialize notifications
+  tz.initializeTimeZones(); // Initialize time zones
 
-  runApp(const MyApp());
+  runApp(const PaperTradingApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class PaperTradingApp extends StatelessWidget {
+  const PaperTradingApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Paper Trading',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
+        brightness: Brightness.dark,
       ),
-      home: const Home(),
+      home: const MainScreen(),
     );
   }
 }
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _HomeState extends State<Home> {
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
+
+  // Tab pages
+  final List<Widget> _pages = [
+    const HomePage(),  // Updated HomePage with notification buttons
+    const ChartPage(),
+    const BuyPage(),
+    const SellPage(),
+  ];
+
+  // Handle tab switching
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                NotificationService.showInstantNotification(
-                    "Instant Notification", "This shows an instant notifications");
-              },
-              child: const Text('Show Notification'),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () {
-                /*DateTime scheduledDate = DateTime.now().add( const Duration(seconds: 5));
-                NotificationService.scheduleNotification(
-                  0,
-                  "Scheduled Notification",
-                  "This notification is scheduled to appear after 5 seconds",
-                  scheduledDate,
-                );*/
-              },
-              child: const Text('Schedule Notification'),
-            ),
-          ],
-        ),
+      body: _pages[_selectedIndex], // Render selected tab
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex, // Highlight the current tab
+        onTap: _onItemTapped, // Handle tab clicks
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Chart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Buy',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sell),
+            label: 'Sell',
+          ),
+        ],
       ),
     );
   }
