@@ -13,11 +13,12 @@ import 'notification/notification.dart'; // Notification Service
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notifications and time zones
-  await NotificationService.init(); // Initialize notifications
-  await SignalService.instance.initializeNotifications(); // Initialize SignalService notifications
-  SignalService.instance.startFetchingSignals(); // Start fetching signals every 5 seconds
-  tz.initializeTimeZones(); // Initialize time zones
+  // Initialize NotificationService and SignalService
+  await NotificationService.init();
+  await SignalService.instance.initializeNotifications(); // No longer a void error
+
+  SignalService.instance.startFetchingSignals();
+  tz.initializeTimeZones();
 
   runApp(const PaperTradingApp());
 }

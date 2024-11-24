@@ -1,6 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:collection/collection.dart';
 
@@ -59,7 +58,7 @@ class SignalService {
 
         // Check for changes
         if (_previousSignals.isEmpty || !_listEquals(_previousSignals, signals)) {
-          _sendNotification();
+          _sendDetailedNotification(signals);
           _previousSignals = List<Map<String, dynamic>>.from(signals);
         }
       }
@@ -68,22 +67,34 @@ class SignalService {
     }
   }
 
-  // Send local notification
-  Future<void> _sendNotification() async {
-    const androidDetails = AndroidNotificationDetails(
-      'channel_id',
-      'Buy Signals',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const notificationDetails = NotificationDetails(android: androidDetails);
+  // Send local notification with detailed information
+  Future<void> _sendDetailedNotification(List<Map<String, dynamic>> signals) async {
+    final latestSignal = signals.isNotEmpty ? signals.first : null;
 
-    await _notificationsPlugin.show(
-      0,
-      'New Buy Signal Updates!',
-      'There are new updates to the buy signals.',
-      notificationDetails,
-    );
+    if (latestSignal != null) {
+      final details = '''
+Instrument: ${latestSignal['instrument']}
+Buy Price: ${latestSignal['buyPrice']}
+Stop Loss: ${latestSignal['stopLoss']}
+Target: ${latestSignal['target']}
+Time: ${latestSignal['time']}
+      ''';
+
+      const androidDetails = AndroidNotificationDetails(
+        'channel_id',
+        'Buy Signals',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+      const notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _notificationsPlugin.show(
+        0,
+        'New Buy Signal: ${latestSignal['instrument']}',
+        details,
+        notificationDetails,
+      );
+    }
   }
 
   bool _listEquals(List<Map<String, dynamic>> list1, List<Map<String, dynamic>> list2) {
