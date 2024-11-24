@@ -8,20 +8,23 @@ class FullScreenImagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Full Screen Image'),
-        backgroundColor: Colors.black,
-      ),
+      backgroundColor: Colors.black, // Black background for better contrast
       body: GestureDetector(
         onVerticalDragEnd: (details) {
           Navigator.of(context).pop(); // Close the screen on swipe up/down
         },
-        child: Center(
-          child: Image.network(
-            imageUrl, // The full URL of the image
-            fit: BoxFit.contain, // Ensures the image fits within the screen
-            width: double.infinity, // Full width
-            height: double.infinity, // Full height
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top, // Add padding equal to the status bar height
+            ),
+            child: Center(
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover, // Use cover to fill the width entirely
+                width: MediaQuery.of(context).size.width, // Full width of the screen
+              ),
+            ),
           ),
         ),
       ),
