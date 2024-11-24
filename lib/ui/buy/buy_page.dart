@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:collection/collection.dart'; // Import collection package for MapEquality
+import '../../notification/signal_service.dart'; // Import SignalService
 
 class BuyPage extends StatefulWidget {
   const BuyPage({super.key});
@@ -34,63 +35,62 @@ class _BuyPageState extends State<BuyPage> {
     await FlutterBackground.enableBackgroundExecution();
   }
 
-  // Start periodic data fetch every 30 seconds
+  // Start periodic data fetch every 5 seconds
   void _startPeriodicRequest() {
     _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       _fetchBuySignals();
     });
   }
 
-  // Function to fetch buy signal data
-  // Function to fetch buy signal data
-Future<void> _fetchBuySignals() async {
-  try {
-    final response = await http.get(Uri.parse('http://192.168.0.183:8000/buy.txt'));
+  // Fetch buy signal data
+  Future<void> _fetchBuySignals() async {
+    try {
+      final response = await http.get(Uri.parse('http://192.168.0.183:8000/buy.txt'));
 
-    if (response.statusCode == 200) {
-      // Process raw signals from the response
-      final rawSignals = response.body.split('\n\n');
-      final List<Map<String, dynamic>> signals = rawSignals
-          .map((block) {
-            final cleanedBlock = block.trim();
-            final lines = cleanedBlock.split('\n').where((line) => line.trim().isNotEmpty).toList();
+      if (response.statusCode == 200) {
+        // Process raw signals from the response
+        final rawSignals = response.body.split('\n\n');
+        final List<Map<String, dynamic>> signals = rawSignals
+            .map((block) {
+              final cleanedBlock = block.trim();
+              final lines = cleanedBlock.split('\n').where((line) => line.trim().isNotEmpty).toList();
 
-            if (lines.length >= 7) {
-              // Return a properly typed Map<String, dynamic>
-              return {
-                'instrument': lines[0].replaceAll('Buy signal in ', '').trim(),
-                'buyPrice': lines[1].split(':').last.trim(),
-                'stopLoss': lines[2].split(':').last.trim(),
-                'target': lines[3].split(':').last.trim(),
-                'time': lines[6].substring(lines[6].indexOf(':') + 1).trim(),
-              };
-            } else {
-              return null; // For invalid blocks, return null
-            }
-          })
-          .where((signal) => signal != null) // Filter out null values
-          .map((signal) => Map<String, dynamic>.from(signal!)) // Cast to Map<String, dynamic>
-          .toList();
+              if (lines.length >= 7) {
+                // Return a properly typed Map<String, dynamic>
+                return {
+                  'instrument': lines[0].replaceAll('Buy signal in ', '').trim(),
+                  'buyPrice': lines[1].split(':').last.trim(),
+                  'stopLoss': lines[2].split(':').last.trim(),
+                  'target': lines[3].split(':').last.trim(),
+                  'time': lines[6].substring(lines[6].indexOf(':') + 1).trim(),
+                };
+              } else {
+                return null; // For invalid blocks, return null
+              }
+            })
+            .where((signal) => signal != null) // Filter out null values
+            .map((signal) => Map<String, dynamic>.from(signal!)) // Cast to Map<String, dynamic>
+            .toList();
 
+        setState(() {
+          _buySignals = signals; // Assign properly typed signals
+          _isLoading = false;
+        });
+
+        // Check for changes
+        _checkForChanges(signals);
+      } else {
+        throw Exception('Failed to load buy signals');
+      }
+    } catch (e) {
       setState(() {
-        _buySignals = signals; // Assign properly typed signals
         _isLoading = false;
       });
-
-      // Check for changes
-      _checkForChanges(signals);
-    } else {
-      throw Exception('Failed to load buy signals');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
     }
-  } catch (e) {
-    setState(() {
-      _isLoading = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
-    );
   }
-}
 
   // Compare previous and current data to detect changes
   void _checkForChanges(List<Map<String, dynamic>> newSignals) {
@@ -103,19 +103,39 @@ Future<void> _fetchBuySignals() async {
   // Send local notification if there's a change in data
   void _sendNotification() async {
     const androidDetails = AndroidNotificationDetails(
-      'channel_id', 
-      'Buy Signals', 
-      importance: Importance.max, 
-      priority: Priority.high
+      'channel_id',
+      'Buy Signals',
+      importance: Importance.max,
+      priority: Priority.high,
     );
     const notificationDetails = NotificationDetails(android: androidDetails);
 
     await flutterLocalNotificationsPlugin.show(
-      0, 
-      'New Buy Signal Updates!', 
-      'There are new updates to the buy signals.', 
-      notificationDetails
+      0,
+      'New Buy Signal Updates!',
+      'There are new updates to the buy signals.',
+      notificationDetails,
     );
+  }
+
+  // Helper function to compare two lists
+  bool _listEquals(List<Map<String, dynamic>> list1, List<Map<String, dynamic>> list2) {
+    if (list1.length != list2.length) {
+      return false;
+    }
+    // Use MapEquality to compare individual maps
+    for (int i = 0; i < list1.length; i++) {
+      if (!MapEquality().equals(list1[i], list2[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Cancel the timer when the page is disposed
+    super.dispose();
   }
 
   @override
@@ -135,6 +155,7 @@ Future<void> _fetchBuySignals() async {
     );
   }
 
+  // Builds each signal card
   Widget _buildBuyCard(Map<String, dynamic> signal) {
     bool isOrdSelected = false;
     bool isTgtSelected = false;
@@ -206,25 +227,5 @@ Future<void> _fetchBuySignals() async {
         ),
       ),
     );
-  }
-
-  // Helper function to compare two lists
-  bool _listEquals(List<Map<String, dynamic>> list1, List<Map<String, dynamic>> list2) {
-    if (list1.length != list2.length) {
-      return false;
-    }
-    // Use MapEquality to compare individual maps
-    for (int i = 0; i < list1.length; i++) {
-      if (!MapEquality().equals(list1[i], list2[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();  // Cancel the timer when the page is disposed
-    super.dispose();
   }
 }

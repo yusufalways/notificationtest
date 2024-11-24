@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'notification/signal_service.dart'; // Import your SignalService
 
 // Importing pages
 import 'ui/home/home_page.dart';
@@ -11,7 +12,11 @@ import 'notification/notification.dart'; // Notification Service
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize notifications and time zones
   await NotificationService.init(); // Initialize notifications
+  await SignalService.instance.initializeNotifications(); // Initialize SignalService notifications
+  SignalService.instance.startFetchingSignals(); // Start fetching signals every 5 seconds
   tz.initializeTimeZones(); // Initialize time zones
 
   runApp(const PaperTradingApp());
@@ -45,7 +50,7 @@ class _MainScreenState extends State<MainScreen> {
 
   // Tab pages
   final List<Widget> _pages = [
-    const HomePage(),  // Updated HomePage with notification buttons
+    const HomePage(),  // HomePage with notification buttons
     const ChartPage(),
     const BuyPage(),
     const SellPage(),
